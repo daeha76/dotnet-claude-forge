@@ -281,6 +281,140 @@ MyApp/
   run.csx                  # Start dev server
 ```
 
+### Supabase Setup
+
+dotnet-claude-forge uses **Supabase (PostgreSQL)** as the default database. Configure via environment variables:
+
+#### 1. Environment Variables
+
+Create a `.env` file in your project (or set in CI/CD):
+
+```bash
+# Supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+
+# Connection String (Npgsql format)
+SUPABASE_CONNECTION_STRING=Host=db.your-project.supabase.co;Port=5432;Database=postgres;Username=postgres;Password=your-password;Pooling=true;Minimum Pool Size=2;Maximum Pool Size=20;Connection Idle Lifetime=300
+```
+
+See `infra/docker/.env.example` and `infra/azure/.env.example` for full templates.
+
+#### 2. appsettings.json
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=db.xxx.supabase.co;Port=5432;Database=postgres;..."
+  },
+  "Jwt": {
+    "Authority": "https://{supabase-ref}.supabase.co/auth/v1"
+  },
+  "Supabase": {
+    "Url": "https://your-project.supabase.co",
+    "AnonKey": "your-anon-key"
+  }
+}
+```
+
+> For production, use **Azure Key Vault** or **User Secrets** instead of plain text.
+
+#### 3. Local Development (Supabase CLI)
+
+```bash
+# Initialize (already done in this repo)
+supabase init
+
+# Start local Supabase (Docker required)
+supabase start
+
+# Local endpoints:
+#   API:     http://127.0.0.1:54321
+#   Studio:  http://127.0.0.1:54323
+#   DB:      postgresql://postgres:postgres@127.0.0.1:54322/postgres
+```
+
+Configuration is in `supabase/config.toml`.
+
+#### 4. Database Rules
+
+All database conventions are defined in `rules/database-supabase.md`:
+
+| Rule | Description |
+|:-----|:------------|
+| **snake_case** | All tables, columns, indexes use `snake_case` (`UseSnakeCaseNamingConvention()`) |
+| **text only** | Use `text` instead of `varchar(n)` — length constraints via `CHECK` |
+| **EF Core migrations** | Schema changes only via `dotnet ef migrations` (no `supabase db push`) |
+| **RLS mandatory** | Row Level Security enabled on every table |
+| **Audit columns** | `created_at`, `updated_at`, `created_by`, `updated_by` on all tables |
+| **JSONB audit log** | Automatic change history via PostgreSQL triggers |
+
+---
+
+### Daeha.CleanArch NuGet Packages
+
+The `packages/` directory contains **4 reusable NuGet packages** that provide Clean Architecture foundations for .NET 10 projects.
+
+#### Package Overview
+
+```
+Daeha.CleanArch.Domain          → No dependencies (foundation)
+    ↑
+Daeha.CleanArch.Application     → MediatR + FluentValidation
+    ↑
+Daeha.CleanArch.Infrastructure  → EF Core + Npgsql + snake_case
+
+Daeha.CleanArch.Api             → JWT + Serilog + Azure (references Application)
+```
+
+| Package | Description | Key Dependencies |
+|:--------|:------------|:-----------------|
+| **Daeha.CleanArch.Domain** | Result pattern, BaseEntity, AggregateRoot, ValueObject, DomainEvent, marker interfaces | None |
+| **Daeha.CleanArch.Application** | MediatR pipeline behaviors (Logging, Validation, Authorization, Transaction), core interfaces | MediatR 14.1, FluentValidation 12.1 |
+| **Daeha.CleanArch.Infrastructure** | BaseDbContext with multi-tenant global filters, audit columns, CurrentUserService (JWT) | EF Core 10.0, Npgsql 10.0, NamingConventions 10.0 |
+| **Daeha.CleanArch.Api** | ApiKeyAttribute (n8n webhooks), JWT cookie auth, Azure Key Vault, Data Protection, Serilog | JwtBearer 10.0, Serilog 10.0, Azure.Identity 1.18 |
+
+#### Installation
+
+Packages are hosted on **GitHub Packages** (private feed):
+
+```bash
+# 1. Copy NuGet config template
+cp setup/nuget.config.template nuget.config
+
+# 2. Set GitHub token (read:packages permission required)
+export GITHUB_TOKEN=ghp_XXXX
+
+# 3. Add packages to your project
+dotnet add package Daeha.CleanArch.Domain
+dotnet add package Daeha.CleanArch.Application
+dotnet add package Daeha.CleanArch.Infrastructure
+dotnet add package Daeha.CleanArch.Api
+```
+
+Or configure credentials once:
+
+```bash
+dotnet nuget update source github-daeha \
+  --username daeha \
+  --password $GITHUB_TOKEN \
+  --store-password-in-clear-text
+```
+
+#### Publishing (CI/CD)
+
+Packages are automatically published via GitHub Actions when a tag matching `packages/v*` is pushed:
+
+```bash
+git tag packages/v1.0.1
+git push origin packages/v1.0.1
+# → GitHub Actions: build → test → pack → publish to GitHub Packages
+```
+
+See `.github/workflows/publish-packages.yml` for details.
+
+---
+
 ### MCP Server Setup
 
 | Server | API Key | Notes |

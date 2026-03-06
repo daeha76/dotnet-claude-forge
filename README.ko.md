@@ -390,6 +390,140 @@ cp setup/github-workflows/*.yml .github/workflows/
 
 Dockerfile 하나가 양쪽에서 동일하게 사용되므로 **코드 변경 없이** 워크플로우 파일과 GitHub Secrets만 교체하면 됩니다.
 
+### Supabase 설정
+
+dotnet-claude-forge는 **Supabase (PostgreSQL)**를 기본 데이터베이스로 사용합니다. 환경 변수로 설정합니다.
+
+#### 1. 환경 변수
+
+프로젝트에 `.env` 파일을 생성하거나 CI/CD에 설정하세요:
+
+```bash
+# Supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+
+# Connection String (Npgsql 형식)
+SUPABASE_CONNECTION_STRING=Host=db.your-project.supabase.co;Port=5432;Database=postgres;Username=postgres;Password=your-password;Pooling=true;Minimum Pool Size=2;Maximum Pool Size=20;Connection Idle Lifetime=300
+```
+
+전체 템플릿은 `infra/docker/.env.example`과 `infra/azure/.env.example`을 참조하세요.
+
+#### 2. appsettings.json
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=db.xxx.supabase.co;Port=5432;Database=postgres;..."
+  },
+  "Jwt": {
+    "Authority": "https://{supabase-ref}.supabase.co/auth/v1"
+  },
+  "Supabase": {
+    "Url": "https://your-project.supabase.co",
+    "AnonKey": "your-anon-key"
+  }
+}
+```
+
+> 프로덕션에서는 **Azure Key Vault** 또는 **User Secrets**를 사용하세요.
+
+#### 3. 로컬 개발 (Supabase CLI)
+
+```bash
+# 초기화 (이 리포에는 이미 완료됨)
+supabase init
+
+# 로컬 Supabase 시작 (Docker 필요)
+supabase start
+
+# 로컬 엔드포인트:
+#   API:     http://127.0.0.1:54321
+#   Studio:  http://127.0.0.1:54323
+#   DB:      postgresql://postgres:postgres@127.0.0.1:54322/postgres
+```
+
+설정 파일은 `supabase/config.toml`에 있습니다.
+
+#### 4. 데이터베이스 규칙
+
+모든 DB 규칙은 `rules/database-supabase.md`에 정의되어 있습니다:
+
+| 규칙 | 설명 |
+|:-----|:-----|
+| **snake_case** | 모든 테이블, 컬럼, 인덱스에 `snake_case` 사용 (`UseSnakeCaseNamingConvention()`) |
+| **text 전용** | `varchar(n)` 대신 `text` 사용 — 길이 제약은 `CHECK`로 분리 |
+| **EF Core 마이그레이션** | 스키마 변경은 오직 `dotnet ef migrations`으로만 (`supabase db push` 금지) |
+| **RLS 의무화** | 모든 테이블에 Row Level Security 활성화 필수 |
+| **Audit 컬럼** | 모든 테이블에 `created_at`, `updated_at`, `created_by`, `updated_by` 포함 |
+| **JSONB Audit 로그** | PostgreSQL Trigger로 변경 이력 자동 저장 |
+
+---
+
+### Daeha.CleanArch NuGet 패키지
+
+`packages/` 디렉토리에 .NET 10 프로젝트를 위한 **Clean Architecture 기반 NuGet 패키지 4개**가 있습니다.
+
+#### 패키지 구조
+
+```
+Daeha.CleanArch.Domain          → 외부 의존성 없음 (기반 레이어)
+    ↑
+Daeha.CleanArch.Application     → MediatR + FluentValidation
+    ↑
+Daeha.CleanArch.Infrastructure  → EF Core + Npgsql + snake_case
+
+Daeha.CleanArch.Api             → JWT + Serilog + Azure (Application 참조)
+```
+
+| 패키지 | 설명 | 주요 의존성 |
+|:-------|:-----|:-----------|
+| **Daeha.CleanArch.Domain** | Result 패턴, BaseEntity, AggregateRoot, ValueObject, DomainEvent, 마커 인터페이스 | 없음 |
+| **Daeha.CleanArch.Application** | MediatR 파이프라인 동작 (Logging, Validation, Authorization, Transaction), 핵심 인터페이스 | MediatR 14.1, FluentValidation 12.1 |
+| **Daeha.CleanArch.Infrastructure** | 멀티 테넌트 글로벌 필터가 적용된 BaseDbContext, Audit 컬럼, CurrentUserService (JWT) | EF Core 10.0, Npgsql 10.0, NamingConventions 10.0 |
+| **Daeha.CleanArch.Api** | ApiKeyAttribute (n8n 웹훅), JWT 쿠키 인증, Azure Key Vault, Data Protection, Serilog | JwtBearer 10.0, Serilog 10.0, Azure.Identity 1.18 |
+
+#### 설치 방법
+
+패키지는 **GitHub Packages** (프라이빗 피드)에 호스팅됩니다:
+
+```bash
+# 1. NuGet 설정 템플릿 복사
+cp setup/nuget.config.template nuget.config
+
+# 2. GitHub 토큰 설정 (read:packages 권한 필요)
+export GITHUB_TOKEN=ghp_XXXX
+
+# 3. 프로젝트에 패키지 추가
+dotnet add package Daeha.CleanArch.Domain
+dotnet add package Daeha.CleanArch.Application
+dotnet add package Daeha.CleanArch.Infrastructure
+dotnet add package Daeha.CleanArch.Api
+```
+
+또는 자격 증명을 한 번만 설정:
+
+```bash
+dotnet nuget update source github-daeha \
+  --username daeha \
+  --password $GITHUB_TOKEN \
+  --store-password-in-clear-text
+```
+
+#### 패키지 배포 (CI/CD)
+
+`packages/v*` 태그를 푸시하면 GitHub Actions가 자동으로 빌드, 테스트, 패킹, 배포합니다:
+
+```bash
+git tag packages/v1.0.1
+git push origin packages/v1.0.1
+# → GitHub Actions: build → test → pack → publish (GitHub Packages)
+```
+
+자세한 내용은 `.github/workflows/publish-packages.yml`을 참조하세요.
+
+---
+
 ### MCP 서버 설정
 
 설치 시 자동으로 구성됩니다. API 키가 필요한 서버는 별도 설정이 필요합니다.
