@@ -37,9 +37,11 @@ jobs:
         run: dotnet build packages/Daeha.CleanArch.slnx -c Release --no-restore
 
       - name: Run tests
-        run: dotnet test packages/Daeha.CleanArch.slnx -c Release --no-build \
-          --filter "Category=Unit" \
-          --logger "console;verbosity=normal"
+        run: |
+          dotnet test packages/Daeha.CleanArch.slnx \
+            -c Release --no-build \
+            --filter "Category=Unit" \
+            --verbosity normal
 
       - name: Pack
         run: |
