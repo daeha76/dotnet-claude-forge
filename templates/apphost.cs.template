@@ -1,0 +1,45 @@
+#:sdk Aspire.AppHost.Sdk@13.1.2
+
+#pragma warning disable ASPIRECSHARPAPPS001
+
+var builder = DistributedApplication.CreateBuilder(args);
+
+static string FindExecutable(string name)
+{
+    var isWindows = OperatingSystem.IsWindows();
+    var cmd = isWindows ? "where" : "which";
+    using var proc = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(cmd, name)
+    {
+        RedirectStandardOutput = true,
+        UseShellExecute = false
+    })!;
+    var result = proc.StandardOutput.ReadLine()?.Trim();
+    proc.WaitForExit();
+    return !string.IsNullOrEmpty(result) ? result : throw new InvalidOperationException($"'{name}' executable not found in PATH.");
+}
+
+// 1. TailwindCSS Watch 모드 (가장 먼저 실행)
+var webProjectDir = Path.Combine(builder.AppHostDirectory, "src", "{{name}}.Web", "{{name}}.Web");
+var tailwindCliPath = Path.Combine(webProjectDir, "node_modules", "@tailwindcss", "cli", "dist", "index.mjs");
+var tailwindInputCss = Path.Combine(webProjectDir, "wwwroot", "css", "tailwindcss_input.css");
+var tailwindOutputCss = Path.Combine(webProjectDir, "wwwroot", "css", "tailwindcss_output.css");
+var tailwindRunner = Path.Combine(webProjectDir, "tailwind-runner.mjs");
+var nodeExecutable = FindExecutable("node");
+builder.AddExecutable("tailwindcss", nodeExecutable, webProjectDir,
+    tailwindRunner,
+    tailwindCliPath,
+    "-i", tailwindInputCss,
+    "-o", tailwindOutputCss,
+    "--watch");
+
+// 2. API 백엔드 (AddCSharpApp: ProjectReference 불필요)
+var api = builder.AddCSharpApp("{{resourcePrefix}}-api", "src/{{name}}.Api/",
+    options => options.LaunchProfileName = "https");
+
+// 3. Blazor 프론트엔드 (AddCSharpApp: ProjectReference 불필요)
+builder.AddCSharpApp("{{resourcePrefix}}-web", "src/{{name}}.Web/{{name}}.Web/",
+    options => options.LaunchProfileName = "https")
+    .WithReference(api)
+    .WaitFor(api);
+
+builder.Build().Run();

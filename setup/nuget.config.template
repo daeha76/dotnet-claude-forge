@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+    <!-- Daeha.CleanArch.* 패키지: GitHub Packages (private feed)
+         인증: GITHUB_TOKEN 환경 변수 또는 PAT (read:packages 권한 필요)
+         
+         Windows/macOS 설정 (처음 한 번):
+           dotnet nuget update source github-daeha \
+             --username daeha \
+             --password $GITHUB_TOKEN \
+             --store-password-in-clear-text
+         
+         또는 환경변수로:
+           export GITHUB_TOKEN=ghp_XXXX -->
+    <add key="github-daeha" value="https://nuget.pkg.github.com/daeha/index.json" />
+  </packageSources>
+  <packageSourceCredentials>
+    <github-daeha>
+      <add key="Username" value="daeha" />
+      <add key="ClearTextPassword" value="%GITHUB_TOKEN%" />
+    </github-daeha>
+  </packageSourceCredentials>
+</configuration>

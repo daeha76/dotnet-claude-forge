@@ -1,0 +1,39 @@
+/**
+ * tailwind-runner.mjs
+ * Aspire 비대화형 환경에서 --watch 모드가 종료될 경우 자동 재시작하는 래퍼.
+ * Usage: node tailwind-runner.mjs <tailwind-cli-path> [...args]
+ */
+import { spawn } from 'node:child_process';
+
+const [, , ...args] = process.argv;
+if (args.length === 0) {
+  console.error('[tailwind-runner] No arguments provided.');
+  process.exit(1);
+}
+
+let child = null;
+
+function start() {
+  console.log(`[tailwind-runner] Starting: node ${args.join(' ')}`);
+
+  child = spawn(process.execPath, args, {
+    stdio: ['pipe', 'inherit', 'inherit'], // stdin을 pipe로 유지 → 닫힘 감지 방지
+    env: process.env,
+  });
+
+  child.on('close', (code) => {
+    console.log(`[tailwind-runner] Exited (code=${code}). Restarting in 1s...`);
+    child = null;
+    setTimeout(start, 1000);
+  });
+}
+
+function shutdown(signal) {
+  if (child) child.kill(signal);
+  process.exit(0);
+}
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+start();

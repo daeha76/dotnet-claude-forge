@@ -1,0 +1,65 @@
+name: Update Knowledge Base
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '갱신 범위 (stale=30일 초과, all=전체)'
+        required: true
+        default: 'stale'
+        type: choice
+        options:
+          - stale
+          - all
+
+jobs:
+  update:
+    name: Refresh knowledge summaries
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Find stale entries
+        id: find-stale
+        run: |
+          MODE="${{ github.event.inputs.mode || 'stale' }}"
+          ENTRIES=$(node scripts/update-knowledge/find-stale.js "$MODE" 30)
+          COUNT=$(echo "$ENTRIES" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d).length));")
+          echo "stale_count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "entries=$ENTRIES" >> "$GITHUB_OUTPUT"
+          echo "Found $COUNT stale entries"
+
+      - name: Skip if nothing to update
+        if: steps.find-stale.outputs.stale_count == '0'
+        run: echo "모든 항목이 최신 상태입니다."
+
+      - name: Refresh summaries via Claude API
+        if: steps.find-stale.outputs.stale_count != '0'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ENTRIES: ${{ steps.find-stale.outputs.entries }}
+        run: node scripts/update-knowledge/refresh.js
+
+      - name: Commit updated knowledge
+        if: steps.find-stale.outputs.stale_count != '0'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add knowledge/
+          if git diff --staged --quiet; then
+            echo "변경사항 없음"
+          else
+            COUNT="${{ steps.find-stale.outputs.stale_count }}"
+            git commit -m "chore: knowledge 자동 갱신 (${COUNT}개, $(date +%Y-%m-%d))"
+            git push
+          fi

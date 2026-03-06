@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/Daeha.CleanArch.Tests/Daeha.CleanArch.Tests.csproj" />
+  </Folder>
+  <Project Path="Daeha.CleanArch.Api/Daeha.CleanArch.Api.csproj" />
+  <Project Path="Daeha.CleanArch.Application/Daeha.CleanArch.Application.csproj" />
+  <Project Path="Daeha.CleanArch.Domain/Daeha.CleanArch.Domain.csproj" />
+  <Project Path="Daeha.CleanArch.Infrastructure/Daeha.CleanArch.Infrastructure.csproj" />
+</Solution>

@@ -1,0 +1,146 @@
+using {{name}}.Application;
+using {{name}}.Infrastructure;
+using Daeha.CleanArch.Api.Extensions;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.OpenApi;
+using Serilog;
+using Serilog.Events;
+using System.Threading.RateLimiting;
+
+// ─── Serilog 부트스트랩 로거 (DI 이전 에러 캡처) ──────────────────────────────
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+
+try
+{
+    var builder = WebApplication.CreateBuilder(args);
+
+    // ─── Azure Key Vault (Staging/Production 자동 활성화) ──────────────────────
+    builder.AddAzureKeyVault();
+
+    // ─── Serilog (Console + n8n Webhook 조건부 활성화) ────────────────────────
+    // n8n Webhook: Serilog:N8nWebhookUrl 설정 시에만 자동 활성화
+    builder.Host.UseSerilog((ctx, services, lc) =>
+    {
+        lc.ReadFrom.Configuration(ctx.Configuration)
+          .ReadFrom.Services(services)
+          .Enrich.FromLogContext()
+          .Enrich.WithProperty("Application", "{{name}}")
+          .Enrich.WithProperty("Environment", ctx.HostingEnvironment.EnvironmentName);
+
+        var webhookUrl = ctx.Configuration["Serilog:N8nWebhookUrl"];
+        if (!string.IsNullOrEmpty(webhookUrl))
+        {
+            lc.WriteTo.Http(
+                requestUri: webhookUrl,
+                queueLimitBytes: null,
+                restrictedToMinimumLevel: LogEventLevel.Error);
+        }
+    });
+
+    // ─── Data Protection (개발: 로컬, 운영: Azure Blob + Key Vault) ───────────
+    builder.Services.AddDataProtectionAzure(builder.Configuration, builder.Environment);
+
+    // ─── Application + Infrastructure ────────────────────────────────────────
+    builder.Services.AddApplication();
+    builder.Services.AddInfrastructure(builder.Configuration);
+
+    // ─── Authentication (Supabase JWT → HttpOnly Cookie) ─────────────────────
+    // appsettings: Jwt:Authority = https://{supabase-ref}.supabase.co/auth/v1
+    builder.Services.AddJwtBearerFromCookie(builder.Configuration);
+    builder.Services.AddAuthorization();
+
+    // ─── Controllers + Swagger ───────────────────────────────────────────────
+    builder.Services.AddControllers();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(options =>
+    {
+        options.SwaggerDoc("v1", new OpenApiInfo
+        {
+            Title = "{{name}} API",
+            Version = "v1",
+            Description = "{{name}} Clean Architecture API"
+        });
+        var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+        if (File.Exists(xmlPath)) options.IncludeXmlComments(xmlPath);
+    });
+
+    // ─── Health Checks ───────────────────────────────────────────────────────
+    builder.Services.AddHealthChecks();
+
+    // ─── CORS ────────────────────────────────────────────────────────────────
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowedOrigins", policy =>
+            policy.WithOrigins(
+                    builder.Configuration["Cors:AllowedOrigins"]?.Split(',') ?? [])
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials());
+    });
+
+    // ─── Problem Details (RFC 7807) ───────────────────────────────────────────
+    builder.Services.AddProblemDetails();
+
+    // ─── Rate Limiting (고정 창, 분당 100회/클라이언트) ────────────────────────
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: ctx.User.Identity?.Name ?? ctx.Request.Headers.Host.ToString(),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    AutoReplenishment = true,
+                    PermitLimit = 100,
+                    Window = TimeSpan.FromMinutes(1)
+                }));
+        options.OnRejected = async (ctx, ct) =>
+        {
+            ctx.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+            await ctx.HttpContext.Response.WriteAsync(
+                "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.", ct);
+        };
+    });
+
+    // ─── Build ───────────────────────────────────────────────────────────────
+    var app = builder.Build();
+
+    // ─── Exception Handler (ValidationException→400, Unauthorized→403, else→500)
+    app.UseValidationExceptionHandler();
+
+    // ─── Middleware Pipeline ──────────────────────────────────────────────────
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "{{name}} API v1"));
+    }
+
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseHttpsRedirection();
+        app.UseHsts();
+    }
+
+    app.UseSerilogRequestLogging();
+    app.UseRateLimiter();
+    app.UseCors("AllowedOrigins");
+    app.UseAuthentication();
+    app.UseAuthorization();
+    app.MapControllers();
+    app.MapHealthChecks("/health");
+    app.MapHealthChecks("/health/ready");
+
+    app.Run();
+}
+catch (Exception ex) when (ex is not HostAbortedException)
+{
+    Log.Fatal(ex, "애플리케이션 시작 중 오류 발생");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

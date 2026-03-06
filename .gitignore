@@ -1,0 +1,46 @@
+# User-specific settings (secrets, local overrides)
+settings.local.json
+
+# Backup files
+*.bak.*
+*.backup
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# .NET
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.nupkg
+appsettings.Development.json
+appsettings.Production.json
+appsettings.*.local.json
+*.pfx
+launchSettings.json
+
+# Logs
+*.log
+
+# Archive
+archive/
+reports/
