@@ -1,32 +1,29 @@
-<p align="center">
-  <strong>C# / .NET 10 + Blazor Auto 특화 Claude Code 개발 프레임워크</strong>
-</p>
+<div align="center">
 
-<p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/LICENSE-MIT-blue?style=for-the-badge" alt="MIT License"></a>
-  <a href="https://claude.com/claude-code"><img src="https://img.shields.io/badge/CLAUDE_CODE-%E2%89%A51.0-blueviolet?style=for-the-badge" alt="Claude Code"></a>
-  <a href="https://dotnet.microsoft.com/download/dotnet/10.0"><img src="https://img.shields.io/badge/.NET-10.0-512BD4?style=for-the-badge&logo=dotnet" alt=".NET 10"></a>
-  <a href="https://github.com/daeha76/claude-forge"><img src="https://img.shields.io/badge/based_on-claude--forge-orange?style=for-the-badge" alt="Based on claude-forge"></a>
-</p>
+# dotnet-claude-forge
 
-<p align="center">
-  <a href="#-빠른-시작">빠른 시작</a> &bull;
-  <a href="#-net-프로젝트에서-기능-개발하기">.NET 개발 가이드</a> &bull;
-  <a href="#-배포">배포</a> &bull;
-  <a href="#-개발-워크플로우">워크플로우</a> &bull;
-  <a href="#-설치-가이드">설치</a> &bull;
-  <a href="README.md">English</a>
-</p>
+**C# / .NET 10 + Blazor Auto 특화 Claude Code 개발 프레임워크**
+
+C# / .NET 10 · Blazor Auto · Supabase · Azure 기반 프로젝트를 위한
+Claude Code 설정, 커스텀 에이전트, 자동화 스크립트 모음
+
+[![License](https://img.shields.io/badge/LICENSE-MIT-blue?style=flat-square)](LICENSE)
+[![Claude Code](https://img.shields.io/badge/CLAUDE_CODE-%E2%89%A51.0-blueviolet?style=flat-square)](https://claude.com/claude-code)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?style=flat-square&logo=dotnet)](https://dotnet.microsoft.com)
+
+> [sangrokjung/claude-forge](https://github.com/sangrokjung/claude-forge)를 포크하여 .NET 전용으로 재구성한 버전입니다.
+
+[English](README.md)
+
+</div>
 
 ---
 
 ## dotnet-claude-forge란?
 
-**dotnet-claude-forge**는 [claude-forge](https://github.com/daeha76/claude-forge)를 **.NET 10 / Blazor Auto / Clean Architecture** 환경에 최적화한 포크입니다.
+**dotnet-claude-forge**는 [claude-forge](https://github.com/sangrokjung/claude-forge)를 **.NET 10 / Blazor Auto / Clean Architecture** 환경에 최적화한 포크입니다.
 
-Claude Code를 기본 CLI에서 **완전한 .NET 개발 환경**으로 변환합니다. 설치 한 번으로 **11개 전문 에이전트**, **36개+ 슬래시 커맨드**, **.NET 전용 검증 스킬**(Blazor/EF/Clean Arch), **Azure & Docker 배포 자동화**, **14개 자동화 훅**이 즉시 사용 가능합니다.
-
-> oh-my-zsh가 터미널을 강화하듯, dotnet-claude-forge는 AI 코딩 어시스턴트를 **.NET 파워 유저 도구**로 업그레이드합니다.
+Claude Code를 기본 CLI에서 **완전한 .NET 개발 환경**으로 변환합니다. 설치 한 번으로 **11개 전문 에이전트**, **36개+ 슬래시 커맨드**, **.NET 전용 검증 스킬**(Blazor/EF/Clean Arch), **14개 자동화 훅**이 즉시 사용 가능합니다.
 
 ### 원본(claude-forge) 대비 추가된 것
 
@@ -35,13 +32,13 @@ Claude Code를 기본 CLI에서 **완전한 .NET 개발 환경**으로 변환합
 | `skills/verify-blazor` | `.razor` 컴포넌트 구조·DI·렌더모드 검증 |
 | `skills/verify-ef-migration` | EF Core 마이그레이션 안전성 검사 |
 | `skills/verify-clean-arch` | Clean Architecture 레이어 의존성 위반 탐지 |
-| `skills/verify-deployment` | Dockerfile·헬스체크·환경변수 노출 검사 |
-| `commands/deploy.md` | Azure ↔ Docker 배포 전환 가이드 |
-| `Dockerfile` | 멀티스테이지 빌드 (Azure/Docker 공통) |
-| `infra/docker/` | docker-compose + nginx (Blazor SignalR 최적화) |
-| `setup/github-workflows/` | dotnet-ci, deploy-azure, deploy-docker 템플릿 |
-| `.github/workflows/update-knowledge.yml` | knowledge 주간 자동 갱신 |
-| `devcontainer` | .NET 10 + dotnet-ef 자동 설치 |
+| `rules/architecture-dotnet` | Clean Architecture 레이어 구조, CQRS, Result 패턴 |
+| `rules/coding-style-dotnet` | Nullable, 불변성, Serilog, 파일 크기 기준 |
+| `rules/security-dotnet` | JWT + HttpOnly Cookie, CORS, FluentValidation |
+| `rules/testing-dotnet` | TDD 워크플로우, xUnit, Testcontainers |
+| `rules/database-supabase` | PostgreSQL, EF Core, RLS, 마이그레이션 |
+| `rules/frontend-blazor` | Blazor Auto, JS Interop, 메모리 관리 |
+| `rules/azure-deployment` | App Service, Key Vault, Scale Out 주의사항 |
 
 ---
 
@@ -49,41 +46,35 @@ Claude Code를 기본 CLI에서 **완전한 .NET 개발 환경**으로 변환합
 
 ```bash
 # 1. 클론
-git clone --recurse-submodules https://github.com/daeha76/claude-forge.git
-cd claude-forge
+git clone --recurse-submodules https://github.com/daeha76/dotnet-claude-forge.git
+cd dotnet-claude-forge
 
-# 2. 설치 (~/.claude에 심볼릭 링크 생성)
+# 2. 설치 (macOS / Linux)
 ./install.sh
+
+# 2. 설치 (Windows PowerShell)
+.\install.ps1
 
 # 3. Claude Code 실행
 claude
 ```
 
-이것으로 끝. 모든 에이전트, 커맨드, 훅, 규칙이 즉시 사용 가능합니다.
+> macOS/Linux는 심볼릭 링크로 설치되어 `git pull` 즉시 반영됩니다.
+> Windows는 파일 복사 방식이므로 `git pull` 후 `install.ps1`을 다시 실행하세요.
 
 ### 처음이신가요?
 
-개발이 처음이거나 Claude Code가 낯설다면, 여기서 시작하세요:
-
 | 단계 | 할 일 |
 |:----:|:------|
-| 1 | 설치 후 `/guide` 실행 -- 3분 인터랙티브 투어 |
-| 2 | [첫 사용자 가이드](docs/FIRST-STEPS.md) 읽기 -- 용어 사전 + TOP 6 커맨드 |
-| 3 | [상황별 레시피](docs/WORKFLOW-RECIPES.md) 보기 -- 복사해서 쓰는 5가지 시나리오 |
-
-또는 `/auto 로그인 페이지 만들기`를 입력하면, 계획부터 PR까지 알아서 진행합니다.
+| 1 | 설치 후 `/guide` 실행 — 3분 인터랙티브 투어 |
+| 2 | `/plan` 으로 구현 계획 수립 |
+| 3 | `/auto 로그인 페이지 만들기` 처럼 원버튼으로 플랜-to-PR 실행 |
 
 ---
 
 ## 🔄 개발 워크플로우
 
-<p align="center">
-  <img src="docs/workflow-pipeline.jpg" alt="개발 워크플로우 파이프라인" width="720">
-</p>
-
 ### 새 기능 개발
-
-계획 수립부터 PR 생성까지 한 번에 진행합니다.
 
 ```
 /plan → /tdd → /code-review → /handoff-verify → /commit-push-pr → /sync
@@ -96,13 +87,6 @@ graph LR
     CR --> HV["/handoff-verify<br/><small>Fresh 검증</small>"]
     HV --> CPR["/commit-push-pr<br/><small>커밋 & PR</small>"]
     CPR --> S["/sync<br/><small>문서 동기화</small>"]
-
-    style P fill:#e94560,stroke:#fff,color:#fff
-    style T fill:#0f3460,stroke:#fff,color:#fff
-    style CR fill:#0f3460,stroke:#fff,color:#fff
-    style HV fill:#533483,stroke:#fff,color:#fff
-    style CPR fill:#16213e,stroke:#fff,color:#fff
-    style S fill:#1a1a2e,stroke:#fff,color:#fff
 ```
 
 | 단계 | 커맨드 | 설명 |
@@ -110,9 +94,9 @@ graph LR
 | 1 | `/plan` | planner 에이전트가 구현 계획, 의존성, 리스크를 분석 |
 | 2 | `/tdd` | tdd-guide 에이전트가 RED→GREEN→IMPROVE 사이클 진행 |
 | 3 | `/code-review` | code-reviewer 에이전트가 CRITICAL/HIGH/MEDIUM 이슈 분류 |
-| 4 | `/handoff-verify` | verify-agent가 새 컨텍스트에서 빌드·테스트·린트 검증 |
+| 4 | `/handoff-verify` | verify-agent가 새 컨텍스트에서 `dotnet build` + `dotnet test` 검증 |
 | 5 | `/commit-push-pr` | 커밋 메시지 작성, 푸시, PR 생성까지 자동화 |
-| 6 | `/sync` | 프로젝트 문서 동기화 (prompt_plan.md, spec.md, CLAUDE.md, rules) |
+| 6 | `/sync` | 프로젝트 문서 동기화 (`prompt_plan.md`, `spec.md`, `CLAUDE.md`, rules) |
 
 ### 버그 수정
 
@@ -142,54 +126,23 @@ graph LR
 
 ### 팀 협업
 
-<p align="center">
-  <img src="docs/agent-teams.jpg" alt="Agent Teams Hub-and-Spoke" width="600">
-</p>
-
 ```
-/orchestrate
+/orchestrate → Agent Teams (병렬 작업) → /commit-push-pr
 ```
 
-`/orchestrate` 커맨드로 Agent Teams를 구성하여 병렬 작업을 수행합니다.
-
-```mermaid
-graph LR
-    L["팀 리더"]
-    A1["에이전트 1<br/><small>프론트엔드</small>"]
-    A2["에이전트 2<br/><small>백엔드</small>"]
-    A3["에이전트 3<br/><small>테스팅</small>"]
-
-    L <-->|조율| A1
-    L <-->|조율| A2
-    L <-->|조율| A3
-
-    style L fill:#e94560,stroke:#fff,color:#fff
-    style A1 fill:#0f3460,stroke:#fff,color:#fff
-    style A2 fill:#0f3460,stroke:#fff,color:#fff
-    style A3 fill:#0f3460,stroke:#fff,color:#fff
-```
-
-- **Hub-and-spoke** 통신 (리더가 조율)
-- **파일 소유권** 분리 (머지 충돌 없음)
-- **페이즈 기반** 팀 교체
-- 결정 사항은 `decisions.md`로 외부화
+`/orchestrate` 커맨드로 Agent Teams를 구성하여 프론트엔드·백엔드·테스트를 병렬로 개발합니다.
 
 ---
 
 ## 📦 구성 요소
 
-<p align="center">
-  <img src="docs/features-grid.jpg" alt="Claude Forge 구성 요소" width="720">
-</p>
-
 | 카테고리 | 수량 | 주요 항목 |
 |:--------:|:----:|:----------|
 | **에이전트** | 11 | `planner` `architect` `code-reviewer` `security-reviewer` `tdd-guide` `database-reviewer` (Opus) / `build-error-resolver` `e2e-runner` `refactor-cleaner` `doc-updater` `verify-agent` (Sonnet) |
 | **커맨드** | 36 | `/commit-push-pr` `/handoff-verify` `/explore` `/tdd` `/plan` `/orchestrate` `/security-review` ... |
-| **스킬** | 15 | `build-system` `security-pipeline` `eval-harness` `team-orchestrator` `session-wrap` ... |
+| **스킬** | 15 | `build-system` `security-pipeline` `team-orchestrator` `session-wrap` `verification-engine` ... |
 | **훅** | 14 | 보안 방어 6개 + 유틸리티 8개 |
-| **규칙** | 8 | `coding-style` `security` `git-workflow` `golden-principles` `agents-v2` ... |
-| **MCP 서버** | 6 | `context7` `memory` `exa` `github` `fetch` `jina-reader` |
+| **규칙** | 8 | `architecture-dotnet` `coding-style-dotnet` `security-dotnet` `testing-dotnet` ... |
 
 ---
 
@@ -199,86 +152,59 @@ graph LR
 
 | 도구 | 필수 | 용도 |
 |:-----|:----:|:-----|
-| **Node.js** | ✅ | MCP 서버 실행 (npx) |
+| **.NET SDK** | ✅ | `install.csx` 실행 + .NET 프로젝트 생성 |
 | **Git** | ✅ | 클론, 서브모듈 |
 | **Claude Code CLI** | ✅ | `claude` 명령어 |
-| **.NET SDK** | ✅ | `install.csx` 실행 + .NET 프로젝트 생성 |
+| **Node.js** | ✅ | MCP 서버 실행 (npx) |
 | **dotnet-script** | 자동 설치 | C# 스크립트 실행 엔진 |
-
-### 모든 플랫폼 (Windows / macOS / Linux)
-
-설치 스크립트는 하나의 C# 스크립트(`install.csx`)로 통합되어 있습니다.
-
-```bash
-# 1. 클론 (서브모듈 포함)
-git clone --recurse-submodules https://github.com/daeha76/claude-forge.git
-cd claude-forge
-
-# 2. 설치 (dotnet-script 없으면 자동 설치)
-# --- macOS / Linux ---
-chmod +x install.sh && ./install.sh
-
-# --- Windows (PowerShell) ---
-.\install.ps1
-```
-
-> `dotnet-script` 전역 도구가 없으면 래퍼 스크립트가 자동으로 설치합니다.
-> 또는 직접 실행: `dotnet tool install -g dotnet-script`
-> 그 다음: `dotnet script install.csx`
-
-설치 스크립트가 수행하는 작업:
-
-1. 의존성 확인 (node, git, dotnet)
-2. Git 서브모듈 초기화 (cc-chips)
-3. 기존 `~/.claude/` 백업 (선택)
-4. `~/.claude/`에 심볼릭 링크(macOS/Linux) 또는 복사(Windows) 생성
-5. CC CHIPS 커스텀 오버레이 적용
-6. MCP 서버 설치 (선택)
-7. 외부 스킬 설치 (선택)
-8. 셸 별칭 설정 (`cc`, `ccr`) — macOS/Linux만
 
 ### .NET 신규 프로젝트 생성
 
 ```bash
 # macOS / Linux
-./install.sh --AppName MyApp
+./install.sh MyApp
 
 # Windows
-.\install.ps1 -AppName MyApp
+.\install.ps1 MyApp
+
+# 경로 지정 (macOS / Linux)
+./install.sh MyApp ~/Desktop
+
+# 경로 지정 (Windows)
+.\install.ps1 MyApp D:\\projects
 ```
 
-생성 결과 (Clean Architecture):
+Clean Architecture 솔루션이 자동 생성됩니다:
+
 ```
 MyApp/
   src/
     MyApp.Domain/           # 엔터티, 값 객체
-    MyApp.Application/      # 유스케이스, 인터페이스
-    MyApp.Infrastructure/   # DB, 외부 서비스
+    MyApp.Application/      # 유스케이스, CQRS, 인터페이스
+    MyApp.Infrastructure/   # EF Core, Supabase, 외부 서비스
     MyApp.Api/              # ASP.NET Core Web API
-    MyApp.Web/              # Blazor Auto
+    MyApp.Web/              # Blazor Auto 프론트엔드
+    MyApp.AppHost/          # .NET Aspire 오케스트레이터
   tests/
     MyApp.Domain.Tests/
     MyApp.Application.Tests/
     MyApp.Architecture.Tests/   # 레이어 의존성 자동 검증
-  *.sln, Directory.Build.props, .gitignore
+  .claude/                 # Claude Forge 기능
+  CLAUDE.md                # 프로젝트 컨텍스트
 ```
+
+### MCP 서버
+
+| 서버 | API 키 | 설명 |
+|:-----|:------:|:-----|
+| **context7** | 없음 | 실시간 라이브러리 문서 조회 |
+| **memory** | 없음 | 영속적 지식 그래프 |
+| **github** | `GITHUB_PERSONAL_ACCESS_TOKEN` | 리포/PR/이슈 관리 |
+| **supabase** | Supabase URL/Key | DB 직접 연동 |
 
 ---
 
 ## 💻 .NET 프로젝트에서 기능 개발하기
-
-### 프로젝트 초기화 (최초 1회)
-
-```bash
-cd ~/MyApp   # .NET 프로젝트 폴더
-claude       # Claude Code 실행
-```
-
-```
-/init-project MyApp --type dotnet
-```
-
-`CLAUDE.md`, `spec.md`, `prompt_plan.md`가 자동 생성됩니다.
 
 ### 기능 개발 — 두 가지 방법
 
@@ -294,13 +220,8 @@ claude       # Claude Code 실행
 
 ```
 /plan 로그인 기능 구현
-```
-
-계획 확인 후:
-
-```
 /tdd
-/handoff-verify --security   # 인증 관련 → 보안 검사 포함
+/handoff-verify
 /commit-push-pr
 ```
 
@@ -330,170 +251,116 @@ tests/
 
 > `rules/` 폴더에 Clean Architecture, Blazor, 보안 규칙이 정의되어 있어 별도 지시 없이도 올바른 레이어에 올바른 패턴으로 파일이 생성됩니다.
 
-### 효과적인 지시 방법
-
-| 좋은 예 | 피할 표현 |
-|:--------|:---------|
-| `Supabase Auth 사용해서 이메일 로그인, JWT는 HttpOnly 쿠키로` | `로그인 만들어줘` |
-| `로그인 실패 시 Result 패턴으로 에러 반환, Exception 사용 금지` | `에러 처리도 해줘` |
-| `Blazor LoginPage에서 /api/v1/auth/login 호출` | `화면도 만들어줘` |
-
 ### .NET 전용 검증 커맨드
 
 ```bash
 /verify-blazor          # .razor 컴포넌트 구조 검증
 /verify-ef-migration    # EF Core 마이그레이션 안전성 검사
 /verify-clean-arch      # Clean Architecture 레이어 위반 탐지
-/verify-deployment      # 배포 전 Dockerfile/헬스체크/환경변수 검사
 ```
 
 ---
 
-## 🚀 배포
+## 🤖 에이전트
 
-Azure App Service와 Self-hosted Docker 중 선택하거나 중간에 전환할 수 있습니다.
+### Opus 에이전트 (6) — 심층 분석 & 설계
 
-```
-/deploy status          # 현재 배포 설정 확인
-/deploy azure           # Azure 배포 가이드
-/deploy docker          # Self-hosted Docker 가이드
-/deploy switch azure    # Docker → Azure 전환 체크리스트
-/deploy switch docker   # Azure → Docker 전환 체크리스트
-```
+| 에이전트 | 역할 |
+|:---------|:-----|
+| **planner** | 복잡한 기능의 구현 계획 수립, 의존성/리스크 분석 |
+| **architect** | 시스템 설계, 확장성 결정, 기술 의사결정 |
+| **code-reviewer** | CRITICAL/HIGH/MEDIUM 이슈 분류 코드 리뷰 |
+| **security-reviewer** | OWASP Top 10, 시크릿, SQL Injection 탐지 |
+| **tdd-guide** | RED → GREEN → IMPROVE 테스트 주도 개발 |
+| **database-reviewer** | PostgreSQL/Supabase 스키마, 쿼리 최적화 |
 
-### GitHub Actions 워크플로우 템플릿
+### Sonnet 에이전트 (5) — 빠른 실행 & 자동화
 
-`setup/github-workflows/`에 복사해서 사용하는 템플릿이 있습니다:
-
-```bash
-# 실제 .NET 프로젝트에서
-cp setup/github-workflows/*.yml .github/workflows/
-```
-
-| 파일 | 용도 |
-|:-----|:-----|
-| `dotnet-ci.yml` | PR마다 빌드·테스트·포맷 검사 |
-| `deploy-azure.yml` | Staging → Production 슬롯 스왑 (무중단) |
-| `deploy-docker.yml` | SSH 롤링 배포 |
-
-### Azure vs Self-hosted 비교
-
-| 항목 | Azure App Service | Self-hosted Docker |
-|:-----|:-----------------|:------------------|
-| 로드밸런싱 | Azure가 자동 처리 | nginx + docker compose |
-| 스케일 아웃 | 포털/CLI에서 인스턴스 수 조정 | `docker compose up --scale app=3` |
-| Blazor 스티키 세션 | ARR Affinity 활성화 | nginx `ip_hash` |
-| SSL | Azure 자동 관리 | Let's Encrypt + Certbot |
-| 비용 | Standard S2+ (슬롯 스왑) | 서버 직접 관리 |
-
-### 전환 시 변경 사항
-
-Dockerfile 하나가 양쪽에서 동일하게 사용되므로 **코드 변경 없이** 워크플로우 파일과 GitHub Secrets만 교체하면 됩니다.
-
-### MCP 서버 설정
-
-설치 시 자동으로 구성됩니다. API 키가 필요한 서버는 별도 설정이 필요합니다.
-
-| 서버 | API 키 필요 | 설명 |
-|:-----|:----------:|:-----|
-| **context7** | - | 실시간 라이브러리 문서 조회 |
-| **memory** | - | 영속적 지식 그래프 |
-| **playwright** | - | 브라우저 자동화 |
-| **sequential-thinking** | - | 단계별 추론 |
-| **github** | `GITHUB_PERSONAL_ACCESS_TOKEN` | 리포/PR/이슈 관리 |
-| **supabase** | Supabase URL/Key | DB 직접 연동 |
-
-### 커스터마이징
-
-추적되는 파일을 수정하지 않고 설정을 오버라이드할 수 있습니다:
-
-```bash
-# 로컬 오버라이드 파일 생성 (git-ignored)
-cp setup/settings.local.template.json ~/.claude/settings.local.json
-
-# 시크릿/환경설정 편집
-vim ~/.claude/settings.local.json
-```
-
-`settings.local.json`은 Claude Code가 `settings.json` 위에 병합합니다.
+| 에이전트 | 역할 |
+|:---------|:-----|
+| **build-error-resolver** | 빌드/컴파일 오류 자동 수정 |
+| **e2e-runner** | E2E 테스트 생성, 실행, 관리 |
+| **refactor-cleaner** | 불필요한 코드 정리 |
+| **doc-updater** | 문서 및 코드맵 자동 업데이트 |
+| **verify-agent** | 새 컨텍스트에서 빌드·테스트·린트 검증 |
 
 ---
 
-## 🏗 아키텍처
-
-<p align="center">
-  <img src="docs/architecture.jpg" alt="심볼릭 링크 아키텍처" width="720">
-</p>
-
-```mermaid
-graph TB
-    subgraph REPO["claude-forge (git 리포)"]
-        A["agents/ (11)"]
-        C["commands/ (36)"]
-        S["skills/ (15)"]
-        H["hooks/ (14)"]
-        R["rules/ (8)"]
-        SC["scripts/"]
-        CC["cc-chips/"]
-        K["knowledge/"]
-        REF["reference/"]
-        SET["settings.json"]
-    end
-
-    INSTALL["./install.sh"]
-    REPO --> INSTALL
-
-    subgraph HOME["~/.claude/ (심볼릭 링크)"]
-        HA["agents/"]
-        HC["commands/"]
-        HS["skills/"]
-        HH["hooks/"]
-        HR["rules/"]
-        HSC["scripts/"]
-        HCC["cc-chips/"]
-        HSET["settings.json"]
-    end
-
-    INSTALL -->|symlink| HOME
-
-    CLAUDE["claude (CLI)"]
-    HOME --> CLAUDE
-
-    style REPO fill:#1a1a2e,stroke:#e94560,color:#fff
-    style HOME fill:#0f3460,stroke:#16213e,color:#fff
-    style INSTALL fill:#e94560,stroke:#fff,color:#fff
-    style CLAUDE fill:#533483,stroke:#fff,color:#fff
-```
-
-설치 스크립트가 리포에서 `~/.claude/`로 **심볼릭 링크**를 생성하므로, `git pull` 한 번으로 즉시 업데이트됩니다.
+## 📋 전체 커맨드 목록
 
 <details>
-<summary><strong>전체 디렉토리 구조</strong></summary>
+<summary><strong>36개 커맨드 (클릭해서 펼치기)</strong></summary>
 
-```
-claude-forge/
-  ├── .claude-plugin/       플러그인 매니페스트
-  ├── .github/workflows/    CI 검증
-  ├── agents/               에이전트 정의 (.md)
-  ├── cc-chips/             상태바 서브모듈
-  ├── cc-chips-custom/      커스텀 상태바 오버레이
-  ├── commands/             슬래시 커맨드 (.md + 디렉토리)
-  ├── docs/                 스크린샷, 다이어그램
-  ├── hooks/                이벤트 기반 스크립트
-  ├── knowledge/            지식 베이스
-  ├── reference/            참조 문서
-  ├── rules/                자동 로드 규칙 파일
-  ├── scripts/              유틸리티 스크립트
-  ├── setup/                설치 가이드 + 템플릿
-  ├── skills/               다단계 스킬 워크플로우
-  ├── install.sh            macOS/Linux 설치 스크립트
-  ├── install.ps1           Windows 설치 스크립트
-  ├── mcp-servers.json      MCP 서버 설정
-  ├── settings.json         Claude Code 설정
-  ├── CONTRIBUTING.md       기여 가이드
-  ├── SECURITY.md           보안 정책
-  └── LICENSE               MIT 라이선스
-```
+#### 핵심 워크플로우
+
+| 커맨드 | 설명 |
+|:-------|:-----|
+| `/plan` | AI 구현 계획 수립. 승인 후 코딩 시작. |
+| `/tdd` | 테스트 먼저, 코드 나중. 단위 작업 단위로. |
+| `/code-review` | 보안 + 품질 검사. |
+| `/handoff-verify` | 빌드/테스트/린트 자동 검증. |
+| `/commit-push-pr` | 커밋, 푸시, PR 생성까지 한 번에. |
+| `/quick-commit` | 간단한 수정용 빠른 커밋. |
+| `/verify-loop` | 빌드/테스트 자동 재시도 (최대 3회). |
+| `/auto` | 플랜 to PR 원버튼 자동화. |
+| `/guide` | 처음 사용자용 3분 인터랙티브 투어. |
+
+#### 탐색 & 분석
+
+| 커맨드 | 설명 |
+|:-------|:-----|
+| `/explore` | 코드베이스 구조 탐색 및 분석. |
+| `/build-fix` | 빌드 오류 점진적 수정. |
+| `/next-task` | 프로젝트 상태 기반 다음 작업 추천. |
+| `/suggest-automation` | 반복 패턴 분석 및 자동화 제안. |
+
+#### 보안
+
+| 커맨드 | 설명 |
+|:-------|:-----|
+| `/security-review` | CWE Top 25 + STRIDE 위협 모델링. |
+| `/stride-analysis-patterns` | 체계적 STRIDE 방법론 적용. |
+| `/security-compliance` | SOC2, ISO27001, GDPR, HIPAA 준수 검사. |
+
+#### 테스트
+
+| 커맨드 | 설명 |
+|:-------|:-----|
+| `/e2e` | Playwright E2E 테스트 생성 & 실행. |
+| `/test-coverage` | 커버리지 분석 및 누락 테스트 생성. |
+
+#### 문서 & 동기화
+
+| 커맨드 | 설명 |
+|:-------|:-----|
+| `/update-codemaps` | 코드베이스 분석 후 아키텍처 문서 업데이트. |
+| `/sync-docs` | `prompt_plan.md`, `spec.md`, `CLAUDE.md` 동기화. |
+| `/sync` | `git pull` + 전체 문서 동기화. |
+| `/pull` | `git pull origin main` 빠른 실행. |
+
+#### 프로젝트 관리
+
+| 커맨드 | 설명 |
+|:-------|:-----|
+| `/init-project` | 표준 구조로 새 프로젝트 초기화. |
+| `/orchestrate` | Agent Teams 병렬 오케스트레이션. |
+| `/checkpoint` | 작업 상태 저장/복원. |
+| `/learn` | 교훈 기록 + 자동화 제안. |
+
+#### 리팩토링 & 디버깅
+
+| 커맨드 | 설명 |
+|:-------|:-----|
+| `/refactor-clean` | 불필요한 코드 식별 및 제거. |
+| `/debugging-strategies` | 체계적 디버깅 기법 및 프로파일링. |
+| `/dependency-upgrade` | 주요 의존성 업그레이드 (호환성 분석 포함). |
+
+#### Git Worktree
+
+| 커맨드 | 설명 |
+|:-------|:-----|
+| `/worktree-start` | 병렬 개발을 위한 git worktree 생성. |
+| `/worktree-cleanup` | PR 완료 후 worktree 정리. |
 
 </details>
 
@@ -503,298 +370,75 @@ claude-forge/
 
 ### 보안 훅
 
-<p align="center">
-  <img src="docs/security-layers.jpg" alt="보안 방어 훅" width="480">
-</p>
-
-모든 작업이 계층형 보안 훅을 통과합니다:
-
-| 단계 | 훅 | 방어 대상 |
-|:----:|:---|:----------|
-| 1 | `output-secret-filter.sh` | 출력에 노출된 API 키, 토큰 |
-| 2 | `remote-command-guard.sh` | 안전하지 않은 원격 명령 |
-| 3 | `db-guard.sh` | 파괴적 SQL (DROP, TRUNCATE) |
-| 4 | `security-auto-trigger.sh` | 코드 변경 시 취약점 자동 탐지 (JS/TS/**.NET** 모두 지원) |
-| 5 | `rate-limiter.sh` | API 호출 속도 제한 |
-| 6 | `expensive-mcp-warning.sh` | 고비용 MCP 호출 경고 |
+| 훅 | 트리거 | 보호 대상 |
+|:---|:-------|:---------|
+| `output-secret-filter.sh` | PostToolUse | 출력에 노출된 API Key, Token, 패스워드 |
+| `remote-command-guard.sh` | PreToolUse (Bash) | 위험한 원격 명령 (curl pipe, wget pipe) |
+| `db-guard.sh` | PreToolUse | 파괴적 SQL (DROP, TRUNCATE, WHERE 없는 DELETE) |
+| `security-auto-trigger.sh` | PostToolUse (Edit/Write) | 코드 변경 시 취약점 자동 탐지 |
+| `rate-limiter.sh` | PreToolUse (MCP) | MCP 서버 과도 호출 |
 
 ### 유틸리티 훅
 
-| 훅 | 기능 |
-|:---|:-----|
-| `code-quality-reminder.sh` | 코드 품질 체크리스트 알림 (`.cs`, `.razor`, `.cshtml` 포함) |
-| `context-sync-suggest.sh` | 컨텍스트 동기화 제안 |
-| `mcp-usage-tracker.sh` | MCP 사용량 추적 |
-| `session-wrap-suggest.sh` | 세션 종료 시 정리 제안 |
-| `task-completed.sh` | 작업 완료 알림 |
-| `work-tracker-prompt.sh` | 작업 추적 프롬프트 |
-| `work-tracker-stop.sh` | 작업 추적 종료 |
-| `work-tracker-tool.sh` | 작업 추적 도구 |
+| 훅 | 트리거 | 용도 |
+|:---|:-------|:-----|
+| `code-quality-reminder.sh` | PostToolUse (Edit/Write) | 불변성, 파일 크기, 에러 처리 리마인더 |
+| `context-sync-suggest.sh` | SessionStart | 세션 시작 시 문서 동기화 제안 |
+| `session-wrap-suggest.sh` | Stop | 세션 종료 전 정리 작업 제안 |
+| `task-completed.sh` | TaskCompleted | 서브에이전트 작업 완료 알림 |
 
 ---
 
-## 🤖 에이전트
+## .NET 규칙 파일
 
-각 에이전트는 UI에서 역할별 **색상**으로 구분됩니다:
+Claude Code가 세션마다 자동 로드하는 규칙들입니다:
 
-### Opus (고성능 추론)
-
-| 에이전트 | 색상 | 역할 |
-|:---------|:----:|:-----|
-| `planner` | blue | 복잡한 기능의 구현 계획 수립, 의존성/리스크 분석 |
-| `architect` | blue | 시스템 설계, 확장성, 기술 의사결정 |
-| `code-reviewer` | blue | CRITICAL/HIGH/MEDIUM 이슈 분류 코드 리뷰 |
-| `security-reviewer` | red | OWASP Top 10 기반 보안 분석 |
-| `tdd-guide` | cyan | RED → GREEN → IMPROVE 테스트 주도 개발 |
-| `database-reviewer` | blue | PostgreSQL/Supabase 스키마, 쿼리 최적화 |
-
-### Sonnet (빠른 실행)
-
-| 에이전트 | 색상 | 역할 |
-|:---------|:----:|:-----|
-| `build-error-resolver` | cyan | 빌드 오류 즉시 수정 (TypeScript, **.NET** 등) |
-| `e2e-runner` | cyan | E2E 테스트 생성, 실행, 관리 |
-| `refactor-cleaner` | yellow | 데드 코드 제거, 중복 코드 정리 |
-| `doc-updater` | yellow | 문서/코드맵 자동 업데이트 |
-| `verify-agent` | cyan | 새 컨텍스트에서 빌드·테스트·린트 검증 |
-
-### 색상 체계
-
-| 색상 | 의미 |
-|:-----|:-----|
-| **blue** | 분석/리뷰 |
-| **cyan** | 테스트/검증 |
-| **yellow** | 유지보수/데이터 |
-| **red** | 보안/경고 |
-| **magenta** | 크리에이티브/리서치 |
-| **green** | 비즈니스/성공 |
+| 규칙 파일 | 내용 |
+|:---------|:-----|
+| `architecture-dotnet` | Clean Architecture 레이어 구조, CQRS, Result 패턴 |
+| `coding-style-dotnet` | Nullable, 불변성, Serilog, 파일 크기 기준 |
+| `security-dotnet` | JWT + HttpOnly Cookie, CORS, FluentValidation |
+| `testing-dotnet` | TDD 워크플로우, xUnit, Testcontainers |
+| `database-supabase` | PostgreSQL, EF Core, RLS, 마이그레이션 |
+| `frontend-blazor` | Blazor Auto, JS Interop, 메모리 관리 |
+| `azure-deployment` | App Service, Key Vault, Scale Out 주의사항 |
+| `golden-principles` | 불변성, TDD, 결론 먼저 등 11가지 핵심 원칙 |
 
 ---
 
-<details>
-<summary><strong>📋 전체 커맨드 목록 (36개)</strong></summary>
-
-| 커맨드 | 설명 |
-|:-------|:-----|
-| `/build-fix` | 빌드 오류 자동 수정 |
-| `/checkpoint` | 현재 상태 체크포인트 저장 |
-| `/code-review` | 방금 작성한 코드를 보안+품질 검사 |
-| `/commit-push-pr` | 커밋, 푸시, PR 생성 자동화 |
-| `/debugging-strategies` | 디버깅 전략 가이드 |
-| `/dependency-upgrade` | 의존성 업그레이드 관리 |
-| `/e2e` | E2E 테스트 실행 |
-| `/eval` | 코드 모델 평가 |
-| `/evaluating-code-models` | 코드 모델 벤치마크 |
-| `/evaluating-llms-harness` | LLM 하네스 평가 |
-| `/explore` | 코드베이스를 탐색하여 구조를 파악 |
-| `/extract-errors` | 오류 추출 및 분석 |
-| `/handoff-verify` | 빌드/테스트/린트 한 번에 자동 검증 |
-| `/init-project` | 프로젝트 초기 설정 |
-| `/learn` | 학습 및 지식 축적 |
-| `/next-task` | 다음 작업 할당 |
-| `/orchestrate` | Agent Teams 멀티 에이전트 구성 |
-| `/plan` | AI가 구현 계획을 세워줍니다 |
-| `/pull` | 원격 변경사항 가져오기 |
-| `/quick-commit` | 빠른 커밋 & 푸시 |
-| `/refactor-clean` | 리팩토링 및 코드 정리 |
-| `/security-compliance` | 보안 컴플라이언스 검증 |
-| `/security-review` | 보안 리뷰 실행 |
-| `/stride-analysis-patterns` | STRIDE 위협 모델링 |
-| `/suggest-automation` | 자동화 기회 제안 |
-| `/summarize` | 코드/문서 요약 |
-| `/sync-docs` | 문서 동기화 |
-| `/sync` | 최신 변경사항 풀 + 프로젝트 문서 동기화 (prompt_plan.md, spec.md, CLAUDE.md, rules). 워크플로우 완료 후 또는 세션 시작 시 사용. |
-| `/tdd` | 테스트 먼저 만들고 코드 작성 |
-| `/test-coverage` | 테스트 커버리지 분석 |
-| `/update-codemaps` | 코드맵 업데이트 |
-| `/update-docs` | 문서 업데이트 |
-| `/verify-loop` | 빌드·테스트 반복 검증 |
-| `/web-checklist` | 웹 체크리스트 검사 |
-| `/worktree-cleanup` | 워크트리 정리 |
-| `/worktree-start` | 워크트리 시작 |
-| `/auto` | 계획부터 PR까지 원버튼 자동 실행 |
-| `/guide` | 처음 사용자를 위한 3분 인터랙티브 가이드 |
-| `/show-setup` | 설치 상태와 프로젝트 정보 보기 |
-
-</details>
-
-<details>
-<summary><strong>🎯 전체 스킬 목록 (15개)</strong></summary>
-
-| 스킬 | 설명 |
-|:-----|:-----|
-| `build-system` | 빌드 시스템 구성 및 관리 |
-| `cache-components` | 캐시 컴포넌트 패턴 |
-| `cc-dev-agent` | Claude Code 개발 에이전트 워크플로우 |
-| `continuous-learning-v2` | 지속적 학습 및 진화 시스템 |
-| `eval-harness` | LLM 평가 하네스 |
-| `frontend-code-review` | 프론트엔드 코드 리뷰 |
-| `manage-skills` | 스킬 관리 도구 |
-| `prompts-chat` | 프롬프트 채팅 |
-| `security-pipeline` | 보안 파이프라인 |
-| `session-wrap` | 세션 정리 및 래핑 |
-| `skill-factory` | 스킬 생성 팩토리 |
-| `strategic-compact` | 전략적 컴팩트 |
-| `team-orchestrator` | 팀 오케스트레이터 |
-| `verification-engine` | 검증 엔진 |
-| `verify-implementation` | 구현 검증 |
-
-</details>
-
----
-
-## 🔌 MCP 서버
-
-`mcp-servers.json`에 사전 구성 -- `./install.sh` 또는 `claude mcp add`로 설치:
-
-| 서버 | 용도 |
-|:-----|:-----|
-| **context7** | 실시간 라이브러리 문서 조회 |
-| **memory** | 영속적 지식 그래프 |
-| **exa** | AI 기반 웹 검색 |
-| **github** | 리포/PR/이슈 관리 |
-| **fetch** | 웹 콘텐츠 가져오기 |
-| **jina-reader** | URL → 마크다운 변환 |
-
----
-
-## 🎨 커스터마이징
-
-<details>
-<summary><strong>에이전트 추가하기</strong></summary>
-
-`agents/` 디렉토리에 YAML frontmatter가 포함된 마크다운 파일을 생성하세요:
-
-```markdown
----
-name: my-agent
-description: Use this agent when [트리거 조건]. Input: [입력]. Output: [출력].
-tools: ["Read", "Grep", "Glob"]
-model: sonnet
-memory: project
-color: blue
----
-
-You are an expert [역할]. Your mission is to [목표].
-
-## Process
-1. [단계 1]
-2. [단계 2]
-
-## Output Format
-[출력 형식]
-```
-
-지원 frontmatter 필드: `name` (필수), `description` (필수), `model`, `color`, `tools`, `memory`, `maxTurns`, `isolation`.
-
-상세 필드 설명과 알려진 제한사항은 [reference/agents-config-ref.md](reference/agents-config-ref.md) 참조.
-
-</details>
-
-<details>
-<summary><strong>슬래시 커맨드 추가하기</strong></summary>
-
-`commands/` 디렉토리에 마크다운 파일을 생성하세요:
-
-```markdown
-# my-command.md
-
-/my-command 실행 시 수행할 작업을 기술합니다.
-```
-
-</details>
-
-<details>
-<summary><strong>보안 훅 추가하기</strong></summary>
-
-`hooks/` 디렉토리에 쉘 스크립트를 생성하고 `settings.json`에 등록하세요:
+## 빌드 & 검증 명령어
 
 ```bash
-#!/bin/bash
-# hooks/my-guard.sh
-# 특정 도구 이벤트(PreToolUse, PostToolUse 등)에서 실행됩니다.
-```
+# 빌드
+dotnet build
 
-</details>
+# 테스트
+dotnet test
 
----
+# 포맷 검사
+dotnet format --verify-no-changes
 
-## 자주 묻는 질문
-
-<details>
-<summary><strong>/sync는 무엇을 하나요?</strong></summary>
-
-`/sync`는 프로젝트 메모리와 문서를 동기화합니다. 원격 저장소에서 최신 변경사항을 풀한 뒤, 프로젝트 문서(`prompt_plan.md`, `spec.md`, `CLAUDE.md`, 규칙 파일)를 모두 동기화합니다. 워크플로우(기능 개발, 버그 수정, 리팩토링) 완료 후 또는 새 세션 시작 시 실행하면 Claude가 최신 컨텍스트를 유지합니다.
-
-</details>
-
-<details>
-<summary><strong>Claude Forge는 세션 간 메모리를 어떻게 관리하나요?</strong></summary>
-
-Claude Forge는 3계층 메모리 시스템을 사용합니다:
-
-1. **프로젝트 문서** (`CLAUDE.md`, `prompt_plan.md`, `spec.md`) -- 저장소에 영속하는 프로젝트 수준 지침과 계획. `/sync`로 최신 상태를 유지합니다.
-2. **규칙 파일** (`rules/`) -- 코딩 스타일, 보안, 워크플로우 규칙이 매 세션마다 자동 로드됩니다.
-3. **MCP 메모리 서버** -- 세션 간 영속하는 지식 그래프로 엔티티와 관계를 저장합니다.
-
-세션 시작 시 `/sync`를 실행하면 1, 2 계층이 최신 상태가 됩니다. MCP 메모리 서버(3계층)는 자동으로 영속합니다.
-
-</details>
-
----
-
-## 📚 Knowledge 자동 갱신
-
-`knowledge/` 폴더의 문서는 **매주 월요일** GitHub Actions가 자동으로 최신 내용으로 갱신합니다.
-
-```bash
-# Claude Code 세션에서 수동 실행
-/update-knowledge --list                          # 현재 목록
-/update-knowledge --add URL "제목"                # 새 문서 추가
-/update-knowledge --refresh                       # 30일 이상 된 항목 갱신
-/update-knowledge --refresh-all                   # 전체 강제 갱신
-```
-
-자동 갱신에 필요한 GitHub Secret:
-
-```
-ANTHROPIC_API_KEY = sk-ant-...   # Settings → Secrets → Actions
+# EF Core 마이그레이션
+dotnet ef migrations add [Name] --project src/Infrastructure --startup-project src/Api
+dotnet ef database update --project src/Infrastructure --startup-project src/Api
 ```
 
 ---
 
-## 🤝 기여
+## 기여
 
-에이전트, 커맨드, 스킬, 훅 추가 방법은 [CONTRIBUTING.md](CONTRIBUTING.md)를 참조하세요.
-
----
+[CONTRIBUTING.md](CONTRIBUTING.md)를 참고하여 에이전트, 커맨드, 스킬, 훅을 추가할 수 있습니다.
 
 ---
 
-## Claude Forge를 사용하시나요? 배지를 달아주세요!
+## 라이선스
 
-```markdown
-[![Built with dotnet-claude-forge](https://img.shields.io/badge/Built_with-dotnet--claude--forge-512BD4?style=flat-square&logo=dotnet)](https://github.com/daeha76/dotnet-claude-forge)
-```
-
-이 배지를 프로젝트 README에 추가하여 Claude Forge 사용을 알려주세요.
+[MIT](LICENSE) — 자유롭게 사용, 포크, 빌드하세요.
 
 ---
 
-## Contributors
+<div align="center">
 
-<a href="https://github.com/daeha76/claude-forge/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=daeha76/claude-forge" />
-</a>
+[sangrokjung/claude-forge](https://github.com/sangrokjung/claude-forge)를 포크하여 .NET 전용으로 재구성
 
----
-
-## 📄 라이선스
-
-[MIT](LICENSE) -- 자유롭게 사용, 포크, 확장하세요.
-
----
-
-<p align="center">
-  <sub>Made with ❤️ by <a href="https://github.com/sangrokjung">QJC (Quantum Jump Club)</a></sub>
-</p>
+</div>
