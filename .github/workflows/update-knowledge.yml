@@ -33,11 +33,17 @@ jobs:
         id: find-stale
         run: |
           MODE="${{ github.event.inputs.mode || 'stale' }}"
+          echo "Mode: $MODE"
           ENTRIES=$(node scripts/update-knowledge/find-stale.js "$MODE" 30)
           COUNT=$(echo "$ENTRIES" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d).length));")
           echo "stale_count=$COUNT" >> "$GITHUB_OUTPUT"
-          echo "entries=$ENTRIES" >> "$GITHUB_OUTPUT"
+          # multiline delimiter로 JSON 안전하게 전달
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "entries<<$EOF" >> "$GITHUB_OUTPUT"
+          echo "$ENTRIES" >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
           echo "Found $COUNT stale entries"
+          echo "Entries: $ENTRIES"
 
       - name: Skip if nothing to update
         if: steps.find-stale.outputs.stale_count == '0'
